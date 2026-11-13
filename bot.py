@@ -1,6 +1,9 @@
 import asyncio
 import io
 import sqlite3
+import os
+import threading
+from flask import Flask
 import qrcode
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
@@ -10,6 +13,22 @@ from aiogram.types import (
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+
+# ================= FLASK SERVER FOR RENDER / UPTIMEROBOT =================
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "Bot is alive and running 24x7!"
+
+def run_flask():
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host='0.0.0.0', port=port)
+
+def keep_alive():
+    t = threading.Thread(target=run_flask)
+    t.daemon = True
+    t.start()
 
 # ================= CONFIGURATION =================
 BOT_TOKEN = "9140398729:AAH8iU8gB4xfXP_tLOVxHcJpljRl9sbxIrs"
@@ -434,7 +453,7 @@ async def cb_my_orders(call: CallbackQuery):
     await call.answer()
 
 @dp.callback_query(F.data == "sales")
-async def cb_sales(call: CallbackQuery):
+async def cb_sales(call: CallbackGroup if 'CallbackGroup' in globals() else object):
     kb = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="📢 TG SHOP LOGS", url=LOG_CHANNEL_LINK)],
         [InlineKeyboardButton(text="🏠 Menu", callback_data="main_menu")]
@@ -453,7 +472,8 @@ async def cb_support(call: CallbackQuery):
 
 async def main():
     init_db()
-    print("Bot chalu ho gaya hai...")
+    keep_alive()  # Flask server start karega background mein
+    print("Bot aur Web Server chalu ho gaye hain...")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
