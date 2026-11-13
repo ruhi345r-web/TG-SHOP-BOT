@@ -1,3 +1,4 @@
 aiogram
 qrcode
 pillow
+flask
